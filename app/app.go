@@ -6,8 +6,8 @@ import (
 	"github.com/networm6/PoliteCat/common/encrypt"
 	"github.com/networm6/PoliteCat/common/tools"
 	"github.com/networm6/PoliteCat/tunnel"
-	"log"
-	"os"
+	"io"
+	"net/http"
 )
 
 // Cat 结构体
@@ -20,8 +20,8 @@ type Cat struct {
 	TotalWrittenBytes uint64
 
 	_tunnelDev *tunnel.Tunnel
-	_wsConf    *ws2.Config
-	_tunConf   *tunnel.Config
+	_wsConf    *ws2.WSConfig
+	_tunConf   *tunnel.TunConfig
 }
 
 // NewCat 创建。
@@ -39,26 +39,40 @@ func NewCat() *Cat {
 }
 
 // InitApp 初始化
-func (cat *Cat) InitApp(conf *Config) {
-	tunConf := &tunnel.Config{
-		DeviceName:     "simonTunnel",
-		MTU:            1500,
-		ServerAddr:     conf.ServerAddr,
-		BufferSize:     64 * 1024,
-		MixinFunc:      conf.MixinFunc,
-		LocalGateway:   tools.DiscoverGateway(true),
-		LocalGatewayv6: tools.DiscoverGateway(false),
+func (cat *Cat) InitApp(conf *AppConfig) {
+	tunConf := &tunnel.TunConfig{
+		DeviceName: "simonTunnel",
+		MTU:        1500,
+		ServerMode: conf.ServerMode,
+		ServerAddr: conf.ServerAddr,
+		BufferSize: 64 * 1024,
+		MixinFunc:  conf.MixinFunc,
 	}
-	address, err := tools.InitAddress(conf.ServerAddr+"/address", conf.Key)
-	if err != nil {
-		log.Fatalf("App error :%v", err)
-		os.Exit(-1)
+	if conf.ServerMode {
+		serverAddress := tools.Address{
+			ServerTunnelIP:   "172.16.0.1",
+			ServerTunnelIPv6: "fced:9999::1",
+
+			CIDR:   "172.16.0.1/24",
+			CIDRv6: "fced:9999::9999/64",
+		}
+		tunConf.Address = serverAddress
+	} else {
+		serverAddress := tools.Address{
+			ServerTunnelIP:   "172.16.0.1",
+			ServerTunnelIPv6: "fced:9999::1",
+
+			CIDR:   "172.16.0.14/24",
+			CIDRv6: "fced:9999::9999/64",
+		}
+		tunConf.Address = serverAddress
+		tunConf.LocalGateway = tools.DiscoverGateway(true)
+		tunConf.LocalGatewayv6 = tools.DiscoverGateway(false)
 	}
-	tunConf.Address = *address
 
 	cat._tunConf = tunConf
 
-	wsConf := &ws2.Config{
+	wsConf := &ws2.WSConfig{
 		ServerAddr: conf.ServerAddr,
 		WSPath:     conf.WSPath,
 		Timeout:    conf.Timeout,
@@ -68,12 +82,24 @@ func (cat *Cat) InitApp(conf *Config) {
 	cat._wsConf = wsConf
 
 	encrypt.SetMixinKey(conf.Key)
+	http.HandleFunc("/stats", func(w http.ResponseWriter, req *http.Request) {
+		_, _ = io.WriteString(w, cat.PrintBytes(true))
+	})
 }
 
-// Start 开始。
-func (cat *Cat) Start() {
+// StartClient 开始。
+func (cat *Cat) StartClient() {
 	cat._tunnelDev.SetConf(cat._tunConf, &cat.TotalReadBytes, &cat.TotalWrittenBytes)
+	cat._tunnelDev.Start()
 	ws2.StartClient(cat._wsConf, cat._tunnelDev)
+}
+
+// StartServer 开始。
+func (cat *Cat) StartServer() {
+	cat._tunnelDev.SetConf(cat._tunConf, &cat.TotalReadBytes, &cat.TotalWrittenBytes)
+	cat._tunnelDev.Start()
+	ws2.StartHttpServer(cat._wsConf, cat._tunConf)
+	ws2.StartServer(cat._wsConf, cat._tunnelDev)
 }
 
 // Destroy 结束。

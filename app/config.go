@@ -5,8 +5,9 @@ import (
 	"os"
 )
 
-// Config The config struct
-type Config struct {
+// AppConfig The config struct
+type AppConfig struct {
+	ServerMode bool   `json:"server_mode"`
 	ServerAddr string `json:"server_addr"`
 	Key        string `json:"key"`
 
@@ -15,9 +16,10 @@ type Config struct {
 	MixinFunc string `json:"mixin_func"`
 }
 
-type nativeConfig Config
+type nativeConfig AppConfig
 
 var DefaultConfig = nativeConfig{
+	ServerMode: false,
 	ServerAddr: ":3001",
 	Key:        "fuck_key",
 	WSPath:     "/freedom",
@@ -25,13 +27,13 @@ var DefaultConfig = nativeConfig{
 	MixinFunc:  "xor",
 }
 
-func (c *Config) UnmarshalJSON(data []byte) error {
+func (c *AppConfig) UnmarshalJSON(data []byte) error {
 	_ = json.Unmarshal(data, &DefaultConfig)
-	*c = Config(DefaultConfig)
+	*c = AppConfig(DefaultConfig)
 	return nil
 }
 
-func (c *Config) LoadConfig(configFile string) (err error) {
+func (c *AppConfig) LoadConfig(configFile string) (err error) {
 	file, err := os.Open(configFile)
 	if err != nil {
 		return

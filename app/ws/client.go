@@ -27,9 +27,9 @@ Client发出的所有网络请求包都会走tun网卡
 
 */
 
-// UserApp --> Kernel --> UserApp(TUN) --> ReadFromTun --> tunToWs --> ws
-func mapStreamsToWebSocket(config *Config, outputStream <-chan []byte, inputStream chan<- []byte, tunCtx context.Context) {
-	go tunToWs(outputStream, tunCtx)
+// UserApp --> Kernel --> UserApp(TUN) --> ReadFromTun --> clientTunToWs --> ws
+func mapStreamsToServer(config *WSConfig, outputStream <-chan []byte, inputStream chan<- []byte, tunCtx context.Context) {
+	go clientTunToWs(outputStream, tunCtx)
 	for tools.ContextOpened(tunCtx) {
 		// 为每个ws链接建立新的ctx
 		connCtx, connCancel := context.WithCancel(tunCtx)
@@ -41,7 +41,7 @@ func mapStreamsToWebSocket(config *Config, outputStream <-chan []byte, inputStre
 		}
 		// 设置一个链接的有效时长为24小时
 		cache.GetCache().Set(ConnTag, conn, 24*time.Hour)
-		go wsToTun(conn, inputStream, connCancel, connCtx)
+		go clientWsToTun(conn, inputStream, connCancel, connCtx)
 		// 建立连接后，每3秒发送一次ping，检测是否断开。
 		ping(conn, connCtx, connCancel)
 		cache.GetCache().Delete(ConnTag)
@@ -50,8 +50,8 @@ func mapStreamsToWebSocket(config *Config, outputStream <-chan []byte, inputStre
 }
 
 // StartClient 启动Client端。
-func StartClient(conf *Config, tun *tunnel.Tunnel) {
-	mapStreamsToWebSocket(conf, tun.OutputStream, tun.InputStream, *tun.LifeCtx)
+func StartClient(conf *WSConfig, tun *tunnel.Tunnel) {
+	mapStreamsToServer(conf, tun.OutputStream, tun.InputStream, *tun.LifeCtx)
 }
 
 func ping(conn net.Conn, _ctx context.Context, _cancel context.CancelFunc) {
@@ -66,7 +66,7 @@ func ping(conn net.Conn, _ctx context.Context, _cancel context.CancelFunc) {
 }
 
 // ConnectServer connects to the server with the given address.
-func connectServer(config *Config) net.Conn {
+func connectServer(config *WSConfig) net.Conn {
 	scheme := "ws"
 
 	u := url.URL{Scheme: scheme, Host: config.ServerAddr, Path: config.WSPath}
@@ -88,4 +88,29 @@ func connectServer(config *Config) net.Conn {
 		return nil
 	}
 	return c
+}
+
+// clientWsToTun Client《--请求结果《--TUN《--inputStream--ws
+func clientWsToTun(conn net.Conn, inputStream chan<- []byte, _cancel context.CancelFunc, _ctx context.Context) {
+	for tools.ContextOpened(_ctx) {
+		packet, err := wsutil.ReadServerBinary(conn)
+		if err != nil {
+			break
+		}
+		inputStream <- packet[:]
+	}
+	_cancel()
+}
+
+// clientTunToWs Client--网络请求--》TUN--outputStream--》ws
+func clientTunToWs(outputStream <-chan []byte, _ctx context.Context) {
+	for tools.ContextOpened(_ctx) {
+		bytes := <-outputStream
+		if v, ok := cache.GetCache().Get(ConnTag); ok {
+			conn := v.(net.Conn)
+			if err := wsutil.WriteClientBinary(conn, bytes); err != nil {
+				continue
+			}
+		}
+	}
 }

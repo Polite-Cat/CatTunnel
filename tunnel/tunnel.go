@@ -12,7 +12,7 @@ type Tunnel struct {
 	LifeCtx      *context.Context
 	LifeCancel   *context.CancelFunc
 
-	_conf         *Config
+	_conf         *TunConfig
 	_tunInterface *water.Interface
 	_mixinFunc    func([]byte) []byte
 	_bufferSize   int
@@ -33,7 +33,7 @@ func NewTunnel(parentCtx context.Context) *Tunnel {
 	return tunnel
 }
 
-func (tun *Tunnel) SetConf(conf *Config, readBytes, writtenBytes *uint64) {
+func (tun *Tunnel) SetConf(conf *TunConfig, readBytes, writtenBytes *uint64) {
 	tun._conf = conf
 	tun._tunInterface = CreateTunnelInterface(*tun._conf)
 	tun._mixinFunc = getFunc(tun._conf.MixinFunc)

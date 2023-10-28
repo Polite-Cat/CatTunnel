@@ -5,9 +5,11 @@ import (
 	"github.com/networm6/PoliteCat/common/tools"
 )
 
-type Config struct {
+type TunConfig struct {
 	DeviceName string `json:"device_name"`
 	MTU        int    `json:"mtu"`
+
+	ServerMode bool `json:"server_mode"`
 
 	ServerAddr     string        `json:"server_addr"`
 	Address        tools.Address `json:"address"`

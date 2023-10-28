@@ -1,6 +1,6 @@
 package ws
 
-type Config struct {
+type WSConfig struct {
 	ServerAddr string `json:"server_addr"`
 	WSPath     string `json:"path"`
 	Timeout    int    `json:"timeout"`
