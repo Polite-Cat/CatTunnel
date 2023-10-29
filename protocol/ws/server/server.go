@@ -17,7 +17,7 @@ import (
 func StartServer(conf *ws2.WSConfig, tun *tunnel.Tunnel) {
 	go tunToWs(tun.OutputStream, *tun.LifeCtx)
 	http.HandleFunc(conf.WSPath, func(w http.ResponseWriter, r *http.Request) {
-		if !ws.CheckPermission(w, r, conf) {
+		if !ws2.CheckPermission(w, r, conf) {
 			return
 		}
 		conn, _, _, err := ws.UpgradeHTTP(r, w)
