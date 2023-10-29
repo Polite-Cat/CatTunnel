@@ -45,7 +45,7 @@ func mapStreamsToServer(config *ws2.WSConfig, outputStream <-chan []byte, inputS
 		cache.GetCache().Set(ConnTag, conn, 24*time.Hour)
 		go wsToTun(conn, inputStream, connCancel, connCtx)
 		// 建立连接后，每3秒发送一次ping，检测是否断开。
-		ping(conn, connCtx, connCancel)
+		alive(conn, connCtx, connCancel)
 		cache.GetCache().Delete(ConnTag)
 		_ = conn.Close()
 	}
@@ -56,15 +56,17 @@ func StartClient(conf *ws2.WSConfig, tun *tunnel.Tunnel) {
 	mapStreamsToServer(conf, tun.OutputStream, tun.InputStream, *tun.LifeCtx)
 }
 
-func ping(conn net.Conn, _ctx context.Context, _cancel context.CancelFunc) {
+func alive(conn net.Conn, _ctx context.Context, _cancel context.CancelFunc) {
+	ticker := time.NewTicker(5 * time.Second)
 	for tools.ContextOpened(_ctx) {
 		err := wsutil.WriteClientMessage(conn, ws.OpText, []byte("ping"))
 		if err != nil {
-			log.Printf("ping error %v\n", err)
+			log.Printf("alive error %v\n", err)
 			break
 		}
-		time.Sleep(3 * time.Second)
+		<-ticker.C
 	}
+	ticker.Stop()
 	_cancel()
 }
 

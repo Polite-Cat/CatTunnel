@@ -8,6 +8,7 @@ import (
 	"io"
 	"net"
 	"net/http"
+	"runtime"
 	"strings"
 )
 
@@ -19,6 +20,7 @@ func StartHttpServer(config *WSConfig, tunConfig *tunnel.TunConfig) {
 		}
 		resp := fmt.Sprintf("%v", ip)
 		_, _ = io.WriteString(w, resp)
+		runtime.Gosched()
 	})
 
 	http.HandleFunc("/register/pick/ip", func(w http.ResponseWriter, r *http.Request) {
@@ -28,6 +30,7 @@ func StartHttpServer(config *WSConfig, tunConfig *tunnel.TunConfig) {
 		ip, pl := register.PickClientIP(tunConfig.Address.CIDR)
 		resp := fmt.Sprintf("%v/%v", ip, pl)
 		_, _ = io.WriteString(w, resp)
+		runtime.Gosched()
 	})
 
 	http.HandleFunc("/register/delete/ip", func(w http.ResponseWriter, r *http.Request) {
@@ -39,6 +42,7 @@ func StartHttpServer(config *WSConfig, tunConfig *tunnel.TunConfig) {
 			register.DeleteClientIP(ip)
 		}
 		_, _ = io.WriteString(w, "OK")
+		runtime.Gosched()
 	})
 
 	http.HandleFunc("/register/keepalive/ip", func(w http.ResponseWriter, r *http.Request) {
@@ -50,6 +54,7 @@ func StartHttpServer(config *WSConfig, tunConfig *tunnel.TunConfig) {
 			register.KeepAliveClientIP(ip)
 		}
 		_, _ = io.WriteString(w, "OK")
+		runtime.Gosched()
 	})
 
 	http.HandleFunc("/register/list/ip", func(w http.ResponseWriter, r *http.Request) {
@@ -57,6 +62,7 @@ func StartHttpServer(config *WSConfig, tunConfig *tunnel.TunConfig) {
 			return
 		}
 		_, _ = io.WriteString(w, strings.Join(register.ListClientIPs(), "\r\n"))
+		runtime.Gosched()
 	})
 
 	http.HandleFunc("/register/prefix/ipv4", func(w http.ResponseWriter, r *http.Request) {
@@ -71,6 +77,7 @@ func StartHttpServer(config *WSConfig, tunConfig *tunnel.TunConfig) {
 			resp = ipv4Net.String()
 		}
 		_, _ = io.WriteString(w, resp)
+		runtime.Gosched()
 	})
 
 	http.HandleFunc("/register/prefix/ipv6", func(w http.ResponseWriter, r *http.Request) {
@@ -85,6 +92,7 @@ func StartHttpServer(config *WSConfig, tunConfig *tunnel.TunConfig) {
 			resp = ipv6Net.String()
 		}
 		_, _ = io.WriteString(w, resp)
+		runtime.Gosched()
 	})
 
 }

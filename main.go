@@ -5,6 +5,7 @@ import (
 	"github.com/networm6/PoliteCat/app"
 	"os"
 	"os/signal"
+	"runtime"
 	"syscall"
 )
 
@@ -32,6 +33,8 @@ func runClient() {
 	cat.InitApp(&cfg)
 	// 开启
 	go cat.StartClient()
+
+	runtime.Gosched()
 
 	quit := make(chan os.Signal, 1)
 	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)

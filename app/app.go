@@ -10,6 +10,7 @@ import (
 	"github.com/networm6/PoliteCat/tunnel"
 	"io"
 	"net/http"
+	"runtime"
 )
 
 // Cat 结构体
@@ -86,6 +87,7 @@ func (cat *Cat) InitApp(conf *AppConfig) {
 	encrypt.SetMixinKey(conf.Key)
 	http.HandleFunc("/stats", func(w http.ResponseWriter, req *http.Request) {
 		_, _ = io.WriteString(w, cat.PrintBytes(true))
+		runtime.Gosched()
 	})
 }
 
