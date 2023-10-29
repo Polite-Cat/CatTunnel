@@ -3,7 +3,6 @@ package ws
 import (
 	"fmt"
 	"github.com/networm6/PoliteCat/protocol/ws/register"
-	"github.com/networm6/PoliteCat/protocol/ws/server"
 	"github.com/networm6/PoliteCat/tunnel"
 	"io"
 	"net"
@@ -11,6 +10,16 @@ import (
 	"runtime"
 	"strings"
 )
+
+func CheckPermission(w http.ResponseWriter, req *http.Request, config *WSConfig) bool {
+	key := req.Header.Get("key")
+	if key != config.Key {
+		w.WriteHeader(http.StatusForbidden)
+		w.Write([]byte("No permission"))
+		return false
+	}
+	return true
+}
 
 func StartHttpServer(config *WSConfig, tunConfig *tunnel.TunConfig) {
 	http.HandleFunc("/ip", func(w http.ResponseWriter, req *http.Request) {
@@ -24,7 +33,7 @@ func StartHttpServer(config *WSConfig, tunConfig *tunnel.TunConfig) {
 	})
 
 	http.HandleFunc("/register/pick/ip", func(w http.ResponseWriter, r *http.Request) {
-		if !server.CheckPermission(w, r, config) {
+		if !CheckPermission(w, r, config) {
 			return
 		}
 		ip, pl := register.PickClientIP(tunConfig.Address.CIDR)
@@ -34,7 +43,7 @@ func StartHttpServer(config *WSConfig, tunConfig *tunnel.TunConfig) {
 	})
 
 	http.HandleFunc("/register/delete/ip", func(w http.ResponseWriter, r *http.Request) {
-		if !server.CheckPermission(w, r, config) {
+		if !CheckPermission(w, r, config) {
 			return
 		}
 		ip := r.URL.Query().Get("ip")
@@ -46,7 +55,7 @@ func StartHttpServer(config *WSConfig, tunConfig *tunnel.TunConfig) {
 	})
 
 	http.HandleFunc("/register/keepalive/ip", func(w http.ResponseWriter, r *http.Request) {
-		if !server.CheckPermission(w, r, config) {
+		if !CheckPermission(w, r, config) {
 			return
 		}
 		ip := r.URL.Query().Get("ip")
@@ -58,7 +67,7 @@ func StartHttpServer(config *WSConfig, tunConfig *tunnel.TunConfig) {
 	})
 
 	http.HandleFunc("/register/list/ip", func(w http.ResponseWriter, r *http.Request) {
-		if !server.CheckPermission(w, r, config) {
+		if !CheckPermission(w, r, config) {
 			return
 		}
 		_, _ = io.WriteString(w, strings.Join(register.ListClientIPs(), "\r\n"))
@@ -66,7 +75,7 @@ func StartHttpServer(config *WSConfig, tunConfig *tunnel.TunConfig) {
 	})
 
 	http.HandleFunc("/register/prefix/ipv4", func(w http.ResponseWriter, r *http.Request) {
-		if !server.CheckPermission(w, r, config) {
+		if !CheckPermission(w, r, config) {
 			return
 		}
 		_, ipv4Net, err := net.ParseCIDR(tunConfig.Address.CIDR)
@@ -81,7 +90,7 @@ func StartHttpServer(config *WSConfig, tunConfig *tunnel.TunConfig) {
 	})
 
 	http.HandleFunc("/register/prefix/ipv6", func(w http.ResponseWriter, r *http.Request) {
-		if !server.CheckPermission(w, r, config) {
+		if !CheckPermission(w, r, config) {
 			return
 		}
 		_, ipv6Net, err := net.ParseCIDR(tunConfig.Address.CIDRv6)

@@ -17,7 +17,7 @@ import (
 func StartServer(conf *ws2.WSConfig, tun *tunnel.Tunnel) {
 	go tunToWs(tun.OutputStream, *tun.LifeCtx)
 	http.HandleFunc(conf.WSPath, func(w http.ResponseWriter, r *http.Request) {
-		if !CheckPermission(w, r, conf) {
+		if !ws.CheckPermission(w, r, conf) {
 			return
 		}
 		conn, _, _, err := ws.UpgradeHTTP(r, w)
@@ -33,16 +33,6 @@ func StartServer(conf *ws2.WSConfig, tun *tunnel.Tunnel) {
 		log.Fatalf("server error %v", err)
 		return
 	}
-}
-
-func CheckPermission(w http.ResponseWriter, req *http.Request, config *ws2.WSConfig) bool {
-	key := req.Header.Get("key")
-	if key != config.Key {
-		w.WriteHeader(http.StatusForbidden)
-		w.Write([]byte("No permission"))
-		return false
-	}
-	return true
 }
 
 // tun --> outputStream --> ws
