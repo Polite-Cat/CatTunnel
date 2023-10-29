@@ -42,6 +42,22 @@ func runClient() {
 
 	cat.Destroy()
 }
+func runServer() {
+	// 创建App和TUN类
+	var cat = app.NewCat()
+	// 加载TUN和websocket配置
+	cat.InitApp(&cfg)
+	// 开启
+	go cat.StartServer()
+
+	runtime.Gosched()
+
+	quit := make(chan os.Signal, 1)
+	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
+	<-quit
+
+	cat.Destroy()
+}
 
 /**
 未知适配器 simonTunnel:
