@@ -32,7 +32,7 @@ type Cat struct {
 func NewCat() *Cat {
 	ctx, cancel := context.WithCancel(context.Background())
 	app := &Cat{
-		Version:           "beta2",
+		Version:           "beta3",
 		LifeCtx:           &ctx,
 		LifeCancel:        &cancel,
 		TotalReadBytes:    0,
