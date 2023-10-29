@@ -13,7 +13,7 @@ func (cat *Cat) GetReadBytes() uint64 {
 
 // GetWrittenBytes returns the number of bytes written
 func (cat *Cat) GetWrittenBytes() uint64 {
-	return atomic.LoadUint64(&cat.TotalReadBytes)
+	return atomic.LoadUint64(&cat.TotalWrittenBytes)
 }
 
 func (cat *Cat) PrintBytes(serverMode bool) string {

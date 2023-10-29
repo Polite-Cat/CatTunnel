@@ -2,9 +2,11 @@ package app
 
 import (
 	"context"
-	ws2 "github.com/networm6/PoliteCat/app/ws"
 	"github.com/networm6/PoliteCat/common/encrypt"
 	"github.com/networm6/PoliteCat/common/tools"
+	"github.com/networm6/PoliteCat/protocol/ws"
+	"github.com/networm6/PoliteCat/protocol/ws/client"
+	"github.com/networm6/PoliteCat/protocol/ws/server"
 	"github.com/networm6/PoliteCat/tunnel"
 	"io"
 	"net/http"
@@ -20,7 +22,7 @@ type Cat struct {
 	TotalWrittenBytes uint64
 
 	_tunnelDev *tunnel.Tunnel
-	_wsConf    *ws2.WSConfig
+	_wsConf    *ws.WSConfig
 	_tunConf   *tunnel.TunConfig
 }
 
@@ -72,7 +74,7 @@ func (cat *Cat) InitApp(conf *AppConfig) {
 
 	cat._tunConf = tunConf
 
-	wsConf := &ws2.WSConfig{
+	wsConf := &ws.WSConfig{
 		ServerAddr: conf.ServerAddr,
 		WSPath:     conf.WSPath,
 		Timeout:    conf.Timeout,
@@ -91,15 +93,15 @@ func (cat *Cat) InitApp(conf *AppConfig) {
 func (cat *Cat) StartClient() {
 	cat._tunnelDev.SetConf(cat._tunConf, &cat.TotalReadBytes, &cat.TotalWrittenBytes)
 	cat._tunnelDev.Start()
-	ws2.StartClient(cat._wsConf, cat._tunnelDev)
+	client.StartClient(cat._wsConf, cat._tunnelDev)
 }
 
 // StartServer 开始。
 func (cat *Cat) StartServer() {
 	cat._tunnelDev.SetConf(cat._tunConf, &cat.TotalReadBytes, &cat.TotalWrittenBytes)
 	cat._tunnelDev.Start()
-	ws2.StartHttpServer(cat._wsConf, cat._tunConf)
-	ws2.StartServer(cat._wsConf, cat._tunnelDev)
+	ws.StartHttpServer(cat._wsConf, cat._tunConf)
+	server.StartServer(cat._wsConf, cat._tunnelDev)
 }
 
 // Destroy 结束。

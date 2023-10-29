@@ -1,4 +1,4 @@
-package ws
+package server
 
 import (
 	"context"
@@ -6,6 +6,7 @@ import (
 	"github.com/gobwas/ws/wsutil"
 	"github.com/networm6/PoliteCat/common/cache"
 	"github.com/networm6/PoliteCat/common/tools"
+	ws2 "github.com/networm6/PoliteCat/protocol/ws"
 	"github.com/networm6/PoliteCat/tunnel"
 	"log"
 	"net"
@@ -13,10 +14,10 @@ import (
 	"time"
 )
 
-func StartServer(conf *WSConfig, tun *tunnel.Tunnel) {
-	go serverTunToWs(tun.OutputStream, *tun.LifeCtx)
+func StartServer(conf *ws2.WSConfig, tun *tunnel.Tunnel) {
+	go tunToWs(tun.OutputStream, *tun.LifeCtx)
 	http.HandleFunc(conf.WSPath, func(w http.ResponseWriter, r *http.Request) {
-		if !checkPermission(w, r, conf) {
+		if !CheckPermission(w, r, conf) {
 			return
 		}
 		conn, _, _, err := ws.UpgradeHTTP(r, w)
@@ -24,7 +25,7 @@ func StartServer(conf *WSConfig, tun *tunnel.Tunnel) {
 			return
 		}
 
-		serverWsToTun(conn, tun.InputStream, conf.Timeout)
+		wsToTun(conn, tun.InputStream, conf.Timeout)
 	})
 
 	err := http.ListenAndServe(conf.ServerAddr, nil)
@@ -34,7 +35,7 @@ func StartServer(conf *WSConfig, tun *tunnel.Tunnel) {
 	}
 }
 
-func checkPermission(w http.ResponseWriter, req *http.Request, config *WSConfig) bool {
+func CheckPermission(w http.ResponseWriter, req *http.Request, config *ws2.WSConfig) bool {
 	key := req.Header.Get("key")
 	if key != config.Key {
 		w.WriteHeader(http.StatusForbidden)
@@ -45,7 +46,7 @@ func checkPermission(w http.ResponseWriter, req *http.Request, config *WSConfig)
 }
 
 // tun --> outputStream --> ws
-func serverTunToWs(outputStream <-chan []byte, _ctx context.Context) {
+func tunToWs(outputStream <-chan []byte, _ctx context.Context) {
 	for tools.ContextOpened(_ctx) {
 		bytes := <-outputStream
 		if key := tools.GetDstKey(bytes); key != "" {
@@ -61,7 +62,7 @@ func serverTunToWs(outputStream <-chan []byte, _ctx context.Context) {
 }
 
 // tun <-- inputStream <-- ws
-func serverWsToTun(wsconn net.Conn, inputStream chan<- []byte, timeout int) {
+func wsToTun(wsconn net.Conn, inputStream chan<- []byte, timeout int) {
 	defer wsconn.Close()
 	for {
 		_ = wsconn.SetReadDeadline(time.Now().Add(time.Duration(timeout) * time.Second))

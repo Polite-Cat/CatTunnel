@@ -1,8 +1,9 @@
-package ws
+package client
 
 import (
 	"context"
 	"github.com/networm6/PoliteCat/common/tools"
+	ws2 "github.com/networm6/PoliteCat/protocol/ws"
 	"github.com/networm6/PoliteCat/tunnel"
 	"log"
 	"net"
@@ -27,13 +28,14 @@ Client发出的所有网络请求包都会走tun网卡
 
 */
 
-// UserApp --> Kernel --> UserApp(TUN) --> ReadFromTun --> clientTunToWs --> ws
-func mapStreamsToServer(config *WSConfig, outputStream <-chan []byte, inputStream chan<- []byte, tunCtx context.Context) {
-	go clientTunToWs(outputStream, tunCtx)
+// UserApp --> Kernel --> UserApp(TUN) --> ReadFromTun --> tunToWs --> ws
+func mapStreamsToServer(config *ws2.WSConfig, outputStream <-chan []byte, inputStream chan<- []byte, tunCtx context.Context) {
+	go tunToWs(outputStream, tunCtx)
 	for tools.ContextOpened(tunCtx) {
+		log.Println("new ws")
 		// 为每个ws链接建立新的ctx
 		connCtx, connCancel := context.WithCancel(tunCtx)
-		conn := connectServer(config)
+		conn := connectServer(config, connCtx)
 		if conn == nil {
 			connCancel()
 			time.Sleep(3 * time.Second)
@@ -41,7 +43,7 @@ func mapStreamsToServer(config *WSConfig, outputStream <-chan []byte, inputStrea
 		}
 		// 设置一个链接的有效时长为24小时
 		cache.GetCache().Set(ConnTag, conn, 24*time.Hour)
-		go clientWsToTun(conn, inputStream, connCancel, connCtx)
+		go wsToTun(conn, inputStream, connCancel, connCtx)
 		// 建立连接后，每3秒发送一次ping，检测是否断开。
 		ping(conn, connCtx, connCancel)
 		cache.GetCache().Delete(ConnTag)
@@ -50,7 +52,7 @@ func mapStreamsToServer(config *WSConfig, outputStream <-chan []byte, inputStrea
 }
 
 // StartClient 启动Client端。
-func StartClient(conf *WSConfig, tun *tunnel.Tunnel) {
+func StartClient(conf *ws2.WSConfig, tun *tunnel.Tunnel) {
 	mapStreamsToServer(conf, tun.OutputStream, tun.InputStream, *tun.LifeCtx)
 }
 
@@ -58,6 +60,7 @@ func ping(conn net.Conn, _ctx context.Context, _cancel context.CancelFunc) {
 	for tools.ContextOpened(_ctx) {
 		err := wsutil.WriteClientMessage(conn, ws.OpText, []byte("ping"))
 		if err != nil {
+			log.Printf("ping error %v\n", err)
 			break
 		}
 		time.Sleep(3 * time.Second)
@@ -66,7 +69,7 @@ func ping(conn net.Conn, _ctx context.Context, _cancel context.CancelFunc) {
 }
 
 // ConnectServer connects to the server with the given address.
-func connectServer(config *WSConfig) net.Conn {
+func connectServer(config *ws2.WSConfig, tunCtx context.Context) net.Conn {
 	scheme := "ws"
 
 	u := url.URL{Scheme: scheme, Host: config.ServerAddr, Path: config.WSPath}
@@ -82,7 +85,7 @@ func connectServer(config *WSConfig) net.Conn {
 			return net.Dial(network, config.ServerAddr)
 		},
 	}
-	c, _, _, err := dialer.Dial(context.Background(), u.String())
+	c, _, _, err := dialer.Dial(tunCtx, u.String())
 	if err != nil {
 		log.Printf("[client] failed to dial websocket %s %v", u.String(), err)
 		return nil
@@ -90,11 +93,12 @@ func connectServer(config *WSConfig) net.Conn {
 	return c
 }
 
-// clientWsToTun Client《--请求结果《--TUN《--inputStream--ws
-func clientWsToTun(conn net.Conn, inputStream chan<- []byte, _cancel context.CancelFunc, _ctx context.Context) {
+// wsToTun Client《--请求结果《--TUN《--inputStream--ws
+func wsToTun(conn net.Conn, inputStream chan<- []byte, _cancel context.CancelFunc, _ctx context.Context) {
 	for tools.ContextOpened(_ctx) {
 		packet, err := wsutil.ReadServerBinary(conn)
 		if err != nil {
+			log.Printf("packet error %v\n", err)
 			break
 		}
 		inputStream <- packet[:]
@@ -102,13 +106,14 @@ func clientWsToTun(conn net.Conn, inputStream chan<- []byte, _cancel context.Can
 	_cancel()
 }
 
-// clientTunToWs Client--网络请求--》TUN--outputStream--》ws
-func clientTunToWs(outputStream <-chan []byte, _ctx context.Context) {
+// tunToWs Client--网络请求--》TUN--outputStream--》ws
+func tunToWs(outputStream <-chan []byte, _ctx context.Context) {
 	for tools.ContextOpened(_ctx) {
 		bytes := <-outputStream
 		if v, ok := cache.GetCache().Get(ConnTag); ok {
 			conn := v.(net.Conn)
 			if err := wsutil.WriteClientBinary(conn, bytes); err != nil {
+				log.Printf("tunToWs error %v\n", err)
 				continue
 			}
 		}

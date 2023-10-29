@@ -21,6 +21,7 @@ func (tun *Tunnel) readFromTunnel() {
 
 func (tun *Tunnel) writeToTunnel() {
 	for tools.ContextOpened(*tun.LifeCtx) {
+		//startTime := time.Now().UnixNano()
 		packet := <-tun.InputStream
 		mixinPacket := tun._mixinFunc(packet)
 		num, err := tun._tunInterface.Write(mixinPacket)
@@ -28,6 +29,9 @@ func (tun *Tunnel) writeToTunnel() {
 			continue
 		}
 		tun.incrReadBytes(num)
+		//endTime := time.Now().UnixNano()
+		//nanoSeconds := float64(endTime - startTime) // ns
+		//fmt.Printf("writeToTunnel %d cost time(ms) :%v;\n", num, nanoSeconds/1e6)
 	}
 }
 

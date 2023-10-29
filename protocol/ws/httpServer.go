@@ -2,7 +2,8 @@ package ws
 
 import (
 	"fmt"
-	"github.com/networm6/PoliteCat/app/ws/register"
+	"github.com/networm6/PoliteCat/protocol/ws/register"
+	"github.com/networm6/PoliteCat/protocol/ws/server"
 	"github.com/networm6/PoliteCat/tunnel"
 	"io"
 	"net"
@@ -21,7 +22,7 @@ func StartHttpServer(config *WSConfig, tunConfig *tunnel.TunConfig) {
 	})
 
 	http.HandleFunc("/register/pick/ip", func(w http.ResponseWriter, r *http.Request) {
-		if !checkPermission(w, r, config) {
+		if !server.CheckPermission(w, r, config) {
 			return
 		}
 		ip, pl := register.PickClientIP(tunConfig.Address.CIDR)
@@ -30,7 +31,7 @@ func StartHttpServer(config *WSConfig, tunConfig *tunnel.TunConfig) {
 	})
 
 	http.HandleFunc("/register/delete/ip", func(w http.ResponseWriter, r *http.Request) {
-		if !checkPermission(w, r, config) {
+		if !server.CheckPermission(w, r, config) {
 			return
 		}
 		ip := r.URL.Query().Get("ip")
@@ -41,7 +42,7 @@ func StartHttpServer(config *WSConfig, tunConfig *tunnel.TunConfig) {
 	})
 
 	http.HandleFunc("/register/keepalive/ip", func(w http.ResponseWriter, r *http.Request) {
-		if !checkPermission(w, r, config) {
+		if !server.CheckPermission(w, r, config) {
 			return
 		}
 		ip := r.URL.Query().Get("ip")
@@ -52,14 +53,14 @@ func StartHttpServer(config *WSConfig, tunConfig *tunnel.TunConfig) {
 	})
 
 	http.HandleFunc("/register/list/ip", func(w http.ResponseWriter, r *http.Request) {
-		if !checkPermission(w, r, config) {
+		if !server.CheckPermission(w, r, config) {
 			return
 		}
 		_, _ = io.WriteString(w, strings.Join(register.ListClientIPs(), "\r\n"))
 	})
 
 	http.HandleFunc("/register/prefix/ipv4", func(w http.ResponseWriter, r *http.Request) {
-		if !checkPermission(w, r, config) {
+		if !server.CheckPermission(w, r, config) {
 			return
 		}
 		_, ipv4Net, err := net.ParseCIDR(tunConfig.Address.CIDR)
@@ -73,7 +74,7 @@ func StartHttpServer(config *WSConfig, tunConfig *tunnel.TunConfig) {
 	})
 
 	http.HandleFunc("/register/prefix/ipv6", func(w http.ResponseWriter, r *http.Request) {
-		if !checkPermission(w, r, config) {
+		if !server.CheckPermission(w, r, config) {
 			return
 		}
 		_, ipv6Net, err := net.ParseCIDR(tunConfig.Address.CIDRv6)
