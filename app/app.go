@@ -23,6 +23,7 @@ type Cat struct {
 	TotalWrittenBytes uint64
 
 	_tunnelDev *tunnel.Tunnel
+	_appConf   *AppConfig
 	_wsConf    *ws.WSConfig
 	_tunConf   *tunnel.TunConfig
 }
@@ -89,17 +90,26 @@ func (cat *Cat) InitApp(conf *AppConfig) {
 		_, _ = io.WriteString(w, cat.PrintBytes(true))
 		runtime.Gosched()
 	})
+	cat._appConf = conf
+}
+
+func (cat *Cat) Start() {
+	if cat._appConf.ServerMode {
+		cat.startServer()
+	} else {
+		cat.startClient()
+	}
 }
 
 // StartClient 开始。
-func (cat *Cat) StartClient() {
+func (cat *Cat) startClient() {
 	cat._tunnelDev.SetConf(cat._tunConf, &cat.TotalReadBytes, &cat.TotalWrittenBytes)
 	cat._tunnelDev.Start()
 	client.StartClient(cat._wsConf, cat._tunnelDev)
 }
 
 // StartServer 开始。
-func (cat *Cat) StartServer() {
+func (cat *Cat) startServer() {
 	cat._tunnelDev.SetConf(cat._tunConf, &cat.TotalReadBytes, &cat.TotalWrittenBytes)
 	cat._tunnelDev.Start()
 	ws.StartHttpServer(cat._wsConf, cat._tunConf)
