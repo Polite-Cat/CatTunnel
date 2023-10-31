@@ -1,8 +1,8 @@
 package tunnel
 
 import (
-	"github.com/networm6/PoliteCat/common/encrypt"
-	"github.com/networm6/PoliteCat/common/tools"
+	"github.com/networm6/CatTunnel/common/encrypt"
+	"github.com/networm6/CatTunnel/common/tools"
 	"sync/atomic"
 )
 

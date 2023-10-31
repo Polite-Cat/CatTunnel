@@ -2,7 +2,7 @@ package main
 
 import (
 	"flag"
-	"github.com/networm6/PoliteCat/app"
+	"github.com/networm6/CatTunnel/app"
 	"os"
 	"os/signal"
 	"runtime"

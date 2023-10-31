@@ -1,4 +1,4 @@
-module github.com/networm6/PoliteCat
+module github.com/networm6/CatTunnel
 
 go 1.21
 

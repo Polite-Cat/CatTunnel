@@ -2,9 +2,9 @@ package client
 
 import (
 	"context"
-	"github.com/networm6/PoliteCat/common/tools"
-	ws2 "github.com/networm6/PoliteCat/protocol/ws"
-	"github.com/networm6/PoliteCat/tunnel"
+	"github.com/networm6/CatTunnel/common/tools"
+	ws2 "github.com/networm6/CatTunnel/protocol/ws"
+	"github.com/networm6/CatTunnel/tunnel"
 	"log"
 	"net"
 	"net/http"
@@ -13,7 +13,7 @@ import (
 
 	"github.com/gobwas/ws"
 	"github.com/gobwas/ws/wsutil"
-	"github.com/networm6/PoliteCat/common/cache"
+	"github.com/networm6/CatTunnel/common/cache"
 )
 
 const ConnTag = "conn"

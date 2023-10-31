@@ -2,8 +2,8 @@ package ws
 
 import (
 	"fmt"
-	"github.com/networm6/PoliteCat/protocol/ws/register"
-	"github.com/networm6/PoliteCat/tunnel"
+	"github.com/networm6/CatTunnel/protocol/ws/register"
+	"github.com/networm6/CatTunnel/tunnel"
 	"io"
 	"net"
 	"net/http"

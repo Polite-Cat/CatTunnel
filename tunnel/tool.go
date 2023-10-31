@@ -1,7 +1,7 @@
 package tunnel
 
 import (
-	"github.com/networm6/PoliteCat/common/tools"
+	"github.com/networm6/CatTunnel/common/tools"
 	"log"
 	"net"
 	"runtime"

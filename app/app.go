@@ -2,12 +2,12 @@ package app
 
 import (
 	"context"
-	"github.com/networm6/PoliteCat/common/encrypt"
-	"github.com/networm6/PoliteCat/common/tools"
-	"github.com/networm6/PoliteCat/protocol/ws"
-	"github.com/networm6/PoliteCat/protocol/ws/client"
-	"github.com/networm6/PoliteCat/protocol/ws/server"
-	"github.com/networm6/PoliteCat/tunnel"
+	"github.com/networm6/CatTunnel/common/encrypt"
+	"github.com/networm6/CatTunnel/common/tools"
+	"github.com/networm6/CatTunnel/protocol/ws"
+	"github.com/networm6/CatTunnel/protocol/ws/client"
+	"github.com/networm6/CatTunnel/protocol/ws/server"
+	"github.com/networm6/CatTunnel/tunnel"
 	"io"
 	"net/http"
 	"runtime"
