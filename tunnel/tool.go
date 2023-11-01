@@ -17,14 +17,8 @@ func CreateTunnelInterface(config TunConfig) (iFace *water.Interface) {
 
 	c := water.Config{DeviceType: water.TUN}
 	c.PlatformSpecificParams = water.PlatformSpecificParams{}
-	os := runtime.GOOS
-	if os == "windows" {
-		c.PlatformSpecificParams.Name = "vtun"
-		c.PlatformSpecificParams.Network = []string{CIDR, CIDRv6}
-	}
-	if config.DeviceName != "" {
-		c.PlatformSpecificParams.Name = config.DeviceName
-	}
+	c.PlatformSpecificParams.Name = config.DeviceName
+	c.PlatformSpecificParams.Network = []string{CIDR, CIDRv6}
 	iFace, err := water.New(c)
 	if err != nil {
 		log.Fatalln("failed to create tunnel interface:", err)

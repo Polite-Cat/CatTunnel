@@ -63,6 +63,9 @@ func wsToTun(wsconn net.Conn, inputStream chan<- []byte, timeout int) {
 		if op == ws.OpText {
 			_ = wsutil.WriteServerMessage(wsconn, op, bytes)
 		} else if op == ws.OpBinary {
+			if len(bytes) == 0 {
+				continue
+			}
 			if key := tools.GetSrcKey(bytes); key != "" {
 				cache.GetCache().Set(key, wsconn, 24*time.Hour)
 				inputStream <- bytes

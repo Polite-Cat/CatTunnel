@@ -1,12 +1,9 @@
 package tools
 
 import (
-	"encoding/json"
 	"github.com/net-byte/go-gateway"
-	"io/ioutil"
 	"log"
 	"net"
-	"net/http"
 	"os/exec"
 	"strings"
 )
@@ -16,32 +13,6 @@ type Address struct {
 	ServerTunnelIPv6 string `json:"server_ipv6"`
 	CIDR             string `json:"cidr"`
 	CIDRv6           string `json:"cidr_ipv6"`
-}
-
-func InitAddress(url string, key string) (*Address, error) {
-	client := http.Client{}
-	req, err := http.NewRequest(http.MethodGet, url, nil)
-	if err != nil {
-		return nil, err
-	}
-	req.Header.Add("Content-type", "application/json;charset=utf-8")
-	req.Header.Add("key", key)
-	resp, err := client.Do(req)
-	if err != nil {
-		return nil, err
-	}
-	defer resp.Body.Close()
-	b, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		return nil, err
-	}
-	var ddr Address
-
-	err = json.Unmarshal(b, &ddr)
-	if err != nil {
-		return nil, err
-	}
-	return &ddr, nil
 }
 
 // GetInterface returns the name of interface
