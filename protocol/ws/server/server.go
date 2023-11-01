@@ -62,7 +62,7 @@ func wsToTun(wsconn net.Conn, inputStream chan<- []byte, timeout int) {
 		}
 		if op == ws.OpText {
 			_ = wsutil.WriteServerMessage(wsconn, op, bytes)
-			log.Println("recv ping")
+			log.Printf("recv ping from %s\n", wsconn.RemoteAddr())
 		} else if op == ws.OpBinary {
 			if len(bytes) == 0 {
 				continue

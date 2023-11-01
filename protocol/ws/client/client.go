@@ -60,7 +60,7 @@ func alive(conn net.Conn, _ctx context.Context, _cancel context.CancelFunc) {
 	ticker := time.NewTicker(5 * time.Second)
 	for tools.ContextOpened(_ctx) {
 		err := wsutil.WriteClientMessage(conn, ws.OpText, []byte("ping"))
-		log.Println("send ping")
+		log.Printf("send ping to %s\n", conn.RemoteAddr())
 		if err != nil {
 			log.Printf("alive error %v\n", err)
 			break
