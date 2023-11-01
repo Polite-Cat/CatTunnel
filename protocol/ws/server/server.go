@@ -39,11 +39,11 @@ func StartServer(conf *ws2.WSConfig, tun *tunnel.Tunnel) {
 func tunToWs(outputStream <-chan []byte, _ctx context.Context) {
 	for tools.ContextOpened(_ctx) {
 		bytes := <-outputStream
-		if key := tools.GetDstKey(bytes); key != "" {
-			if conn, ok := cache.GetCache().Get(key); ok {
+		if clientIP := tools.GetDstKey(bytes); clientIP != "" {
+			if conn, ok := cache.GetCache().Get(clientIP); ok {
 				err := wsutil.WriteServerBinary(conn.(net.Conn), bytes)
 				if err != nil {
-					cache.GetCache().Delete(key)
+					cache.GetCache().Delete(clientIP)
 					continue
 				}
 			}
@@ -62,13 +62,14 @@ func wsToTun(wsconn net.Conn, inputStream chan<- []byte, timeout int) {
 		}
 		if op == ws.OpText {
 			_ = wsutil.WriteServerMessage(wsconn, op, bytes)
-			log.Printf("recv ping from %s\n", wsconn.RemoteAddr())
+			log.Printf("recv ping from %s %s\n", wsconn.RemoteAddr(), wsconn.LocalAddr())
 		} else if op == ws.OpBinary {
 			if len(bytes) == 0 {
 				continue
 			}
-			if key := tools.GetSrcKey(bytes); key != "" {
-				cache.GetCache().Set(key, wsconn, 24*time.Hour)
+			if clientIP := tools.GetSrcKey(bytes); clientIP != "" {
+				log.Println(clientIP)
+				cache.GetCache().Set(clientIP, wsconn, 24*time.Hour)
 				inputStream <- bytes
 			}
 		}
