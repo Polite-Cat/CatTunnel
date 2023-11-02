@@ -25,6 +25,17 @@ func None(src []byte) []byte {
 	return src
 }
 
+// Reverse 反转
+func Reverse(src []byte) []byte {
+	var (
+		_lenV = len(src)
+	)
+	for i, j := 0, _lenV-1; i < j; i, j = i+1, j-1 {
+		src[i], src[j] = src[j], src[i]
+	}
+	return src
+}
+
 func Copy(b []byte) []byte {
 	c := make([]byte, len(b))
 	copy(c, b)

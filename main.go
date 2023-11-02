@@ -18,7 +18,7 @@ func init() {
 
 	flag.StringVar(&cfg.WSPath, "path", app.DefaultConfig.WSPath, "ws path")
 	flag.IntVar(&cfg.Timeout, "t", app.DefaultConfig.Timeout, "dial timeout in seconds")
-	flag.StringVar(&cfg.MixinFunc, "f", app.DefaultConfig.MixinFunc, "mixin function xor/none")
+	flag.StringVar(&cfg.MixinFunc, "f", app.DefaultConfig.MixinFunc, "mixin function xor/none/reverse")
 
 	flag.Parse()
 }

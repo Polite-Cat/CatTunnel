@@ -13,6 +13,7 @@ type Address struct {
 	ServerTunnelIPv6 string `json:"server_ipv6"`
 	CIDR             string `json:"cidr"`
 	CIDRv6           string `json:"cidr_ipv6"`
+	Key              string `json:"key"`
 }
 
 // GetInterface returns the name of interface
@@ -118,9 +119,9 @@ func LookupServerAddrIP(serverAddr string) net.IP {
 // GetSrcKey returns the source key of the packet
 func GetSrcKey(packet []byte) string {
 	key := ""
-	if IsIPv4(packet) && len(packet) >= 20 {
+	if len(packet) >= 20 && IsIPv4(packet) {
 		key = GetIPv4Src(packet).To4().String()
-	} else if IsIPv6(packet) && len(packet) >= 40 {
+	} else if len(packet) >= 40 && IsIPv6(packet) {
 		key = GetIPv6Src(packet).To16().String()
 	}
 	return key

@@ -24,6 +24,8 @@ func getFunc(mixin string) func([]byte) []byte {
 	switch mixin {
 	case "none":
 		return encrypt.None
+	case "reverse":
+		return encrypt.Reverse
 	case "xor":
 	default:
 		return encrypt.Xor

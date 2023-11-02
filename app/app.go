@@ -6,6 +6,7 @@ import (
 	"github.com/networm6/CatTunnel/common/tools"
 	"github.com/networm6/CatTunnel/protocol/ws"
 	"github.com/networm6/CatTunnel/protocol/ws/client"
+	"github.com/networm6/CatTunnel/protocol/ws/dhcp"
 	"github.com/networm6/CatTunnel/protocol/ws/server"
 	"github.com/networm6/CatTunnel/tunnel"
 	"io"
@@ -54,11 +55,8 @@ func (cat *Cat) InitApp(conf *AppConfig) {
 	}
 	if conf.ServerMode {
 		serverAddress := tools.Address{
-			ServerTunnelIP:   "172.16.0.1",
-			ServerTunnelIPv6: "fced:9999::1",
-
-			CIDR:   "172.16.0.1/24",
-			CIDRv6: "fced:9999::9999/64",
+			CIDR:   "172.16.0.1/24",   //必须
+			CIDRv6: "fced:9999::1/64", //必须
 		}
 		tunConf.Address = serverAddress
 	} else {
@@ -113,6 +111,11 @@ func (cat *Cat) startServer() {
 	cat._tunnelDev.SetConf(cat._tunConf, &cat.TotalReadBytes, &cat.TotalWrittenBytes)
 	cat._tunnelDev.Start()
 	ws.StartHttpServer(cat._wsConf, cat._tunConf)
+	dhcp.StartDHCPServer(dhcp.Config{
+		CIDR:   cat._tunConf.Address.CIDR,
+		CIDRv6: cat._tunConf.Address.CIDRv6,
+		Key:    cat._appConf.Key,
+	})
 	server.StartServer(cat._wsConf, cat._tunnelDev)
 }
 
