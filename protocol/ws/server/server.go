@@ -4,10 +4,12 @@ import (
 	"context"
 	"github.com/gobwas/ws"
 	"github.com/gobwas/ws/wsutil"
+	"github.com/networm6/CatTunnel/app"
 	"github.com/networm6/CatTunnel/common/cache"
-	"github.com/networm6/CatTunnel/common/tools"
 	ws2 "github.com/networm6/CatTunnel/protocol/ws"
-	"github.com/networm6/CatTunnel/tunnel"
+	"github.com/networm6/gopherBox/ctxbox"
+	"github.com/networm6/gopherBox/netbox"
+	"github.com/networm6/gopherBox/tunnel"
 	"log"
 	"net"
 	"net/http"
@@ -17,7 +19,7 @@ import (
 func StartServer(conf *ws2.WSConfig, tun *tunnel.Tunnel) {
 	go tunToWs(tun.OutputStream, *tun.LifeCtx)
 	http.HandleFunc(conf.WSPath, func(w http.ResponseWriter, r *http.Request) {
-		if !ws2.CheckPermission(w, r, conf) {
+		if !app.CheckPermission(w, r, conf) {
 			return
 		}
 		conn, _, _, err := ws.UpgradeHTTP(r, w)
@@ -37,9 +39,9 @@ func StartServer(conf *ws2.WSConfig, tun *tunnel.Tunnel) {
 
 // tun --> outputStream --> ws
 func tunToWs(outputStream <-chan []byte, _ctx context.Context) {
-	for tools.ContextOpened(_ctx) {
+	for ctxbox.Opened(_ctx) {
 		bytes := <-outputStream
-		if clientIP := tools.GetDstKey(bytes); clientIP != "" {
+		if clientIP := netbox.GetDstKey(bytes); clientIP != "" {
 			if conn, ok := cache.GetCache().Get(clientIP); ok {
 				err := wsutil.WriteServerBinary(conn.(net.Conn), bytes)
 				if err != nil {
@@ -61,12 +63,12 @@ func wsToTun(wsconn net.Conn, inputStream chan<- []byte, timeout int) {
 			break
 		}
 		if op == ws.OpText {
-			if clientIP := tools.GetSrcKey(bytes); clientIP != "" {
+			if clientIP := netbox.GetSrcKey(bytes); clientIP != "" {
 				log.Printf("recv ping from %s %s\n", wsconn.RemoteAddr(), clientIP)
 			}
 			_ = wsutil.WriteServerMessage(wsconn, op, bytes)
 		} else if op == ws.OpBinary {
-			if clientIP := tools.GetSrcKey(bytes); clientIP != "" {
+			if clientIP := netbox.GetSrcKey(bytes); clientIP != "" {
 				cache.GetCache().Set(clientIP, wsconn, 24*time.Hour)
 				inputStream <- bytes
 			}

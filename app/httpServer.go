@@ -1,16 +1,17 @@
-package ws
+package app
 
 import (
 	"fmt"
-	"github.com/networm6/CatTunnel/protocol/ws/dhcp"
-	"github.com/networm6/CatTunnel/tunnel"
+	"github.com/networm6/CatTunnel/protocol/dhcp/server"
+	"github.com/networm6/CatTunnel/protocol/ws"
+	"github.com/networm6/gopherBox/tunnel"
 	"io"
 	"net/http"
 	"runtime"
 	"strings"
 )
 
-func CheckPermission(w http.ResponseWriter, req *http.Request, config *WSConfig) bool {
+func CheckPermission(w http.ResponseWriter, req *http.Request, config *ws.WSConfig) bool {
 	key := req.Header.Get("key")
 	if key != config.Key {
 		w.WriteHeader(http.StatusForbidden)
@@ -20,7 +21,7 @@ func CheckPermission(w http.ResponseWriter, req *http.Request, config *WSConfig)
 	return true
 }
 
-func StartHttpServer(config *WSConfig, tunConfig *tunnel.TunConfig) {
+func StartHttpServer(config *ws.WSConfig, tunConfig *tunnel.TunConfig) {
 	http.HandleFunc("/ip", func(w http.ResponseWriter, req *http.Request) {
 		ip := req.Header.Get("X-Forwarded-For")
 		if ip == "" {
@@ -35,7 +36,7 @@ func StartHttpServer(config *WSConfig, tunConfig *tunnel.TunConfig) {
 		if !CheckPermission(w, r, config) {
 			return
 		}
-		_, _ = io.WriteString(w, strings.Join(dhcp.ListIP(), "\r\n"))
+		_, _ = io.WriteString(w, strings.Join(server.ListIP(), "\r\n"))
 		runtime.Gosched()
 	})
 

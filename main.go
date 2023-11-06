@@ -3,10 +3,8 @@ package main
 import (
 	"flag"
 	"github.com/networm6/CatTunnel/app"
-	"os"
-	"os/signal"
+	"github.com/networm6/gopherBox/shutdown"
 	"runtime"
-	"syscall"
 )
 
 var cfg = app.AppConfig{}
@@ -33,9 +31,7 @@ func main() {
 
 	runtime.Gosched()
 
-	quit := make(chan os.Signal, 1)
-	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
-	<-quit
+	shutdown.Listen()
 
 	cat.Destroy()
 }

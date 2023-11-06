@@ -1,9 +1,9 @@
-package dhcp
+package server
 
 import (
 	"crypto/rand"
 	"encoding/hex"
-	"github.com/networm6/CatTunnel/common/tools"
+	strbox "github.com/networm6/gopherBox/strings"
 	"log"
 	"net"
 	"strings"
@@ -78,7 +78,7 @@ func PickIP(cidr string) (key string, clientIP string) {
 			break
 		}
 		genIP := ip.String()
-		if !tools.StrIN(genIP, ipList) {
+		if !strbox.StrIN(genIP, ipList) {
 			genKey := generateKey()
 			addIP(genKey, genIP)
 			return genKey, genIP + "/" + strings.Split(cidr, "/")[1]

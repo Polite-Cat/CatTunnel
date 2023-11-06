@@ -2,9 +2,9 @@ package client
 
 import (
 	"context"
-	"github.com/networm6/CatTunnel/common/tools"
 	ws2 "github.com/networm6/CatTunnel/protocol/ws"
-	"github.com/networm6/CatTunnel/tunnel"
+	"github.com/networm6/gopherBox/ctxbox"
+	"github.com/networm6/gopherBox/tunnel"
 	"log"
 	"net"
 	"net/http"
@@ -31,7 +31,7 @@ Client发出的所有网络请求包都会走tun网卡
 // UserApp --> Kernel --> UserApp(TUN) --> ReadFromTun --> tunToWs --> ws
 func mapStreamsToServer(config *ws2.WSConfig, outputStream <-chan []byte, inputStream chan<- []byte, tunCtx context.Context) {
 	go tunToWs(outputStream, tunCtx)
-	for tools.ContextOpened(tunCtx) {
+	for ctxbox.Opened(tunCtx) {
 		log.Println("new ws")
 		// 为每个ws链接建立新的ctx
 		connCtx, connCancel := context.WithCancel(tunCtx)
@@ -58,7 +58,7 @@ func StartClient(conf *ws2.WSConfig, tun *tunnel.Tunnel) {
 
 func alive(conn net.Conn, _ctx context.Context, _cancel context.CancelFunc) {
 	ticker := time.NewTicker(5 * time.Second)
-	for tools.ContextOpened(_ctx) {
+	for ctxbox.Opened(_ctx) {
 		err := wsutil.WriteClientMessage(conn, ws.OpText, []byte("ping"))
 		log.Printf("send ping to %s\n", conn.RemoteAddr())
 		if err != nil {
@@ -98,7 +98,7 @@ func connectServer(config *ws2.WSConfig, tunCtx context.Context) net.Conn {
 
 // wsToTun Client《--请求结果《--TUN《--inputStream--ws
 func wsToTun(conn net.Conn, inputStream chan<- []byte, _cancel context.CancelFunc, _ctx context.Context) {
-	for tools.ContextOpened(_ctx) {
+	for ctxbox.Opened(_ctx) {
 		packet, err := wsutil.ReadServerBinary(conn)
 		if err != nil {
 			log.Printf("packet error %v\n", err)
@@ -111,7 +111,7 @@ func wsToTun(conn net.Conn, inputStream chan<- []byte, _cancel context.CancelFun
 
 // tunToWs Client--网络请求--》TUN--outputStream--》ws
 func tunToWs(outputStream <-chan []byte, _ctx context.Context) {
-	for tools.ContextOpened(_ctx) {
+	for ctxbox.Opened(_ctx) {
 		bytes := <-outputStream
 		if v, ok := cache.GetCache().Get(ConnTag); ok {
 			conn := v.(net.Conn)
